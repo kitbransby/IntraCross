@@ -1,0 +1,27 @@
+# train
+TRAIN_BATCH_SIZE: 4
+VAL_BATCH_SIZE: 1
+LR: 0.0001
+NUM_WORKERS: 8
+EPOCHS: 1000
+VERBOSE: True
+GAMMA: 0.5
+
+# model
+MODEL: 'intracross'
+LOSS: ['NLL']
+LAMBDA: 60
+TAU: 0.6
+CTX_DIM: 6
+POS_DIM: 3
+EMB_DIM: 256
+DROPOUT: {'CTX': 0.1, 'POS': 0.1}
+CTX_ONLY: False
+POS_ONLY: False
+
+# data
+DATA_ROOT: '../Data/'
+DATASET: 'ivus_oct_dataset'
+AUG_LIST: {'UNMATCHED_SHIFT': 0.5, 'MATCHED_SHIFT': 0.5, 'NOISE': 0.5}
+POS_FEAT: ['frame_id', 'angle']
+CTX_FEAT: ['sb_vol', 'sb_ecc', 'lum_vol', 'int_score', 'bbox_score', 'num_pts']
