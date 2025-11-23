@@ -3,12 +3,7 @@ import re
 import os
 from itertools import islice
 import re
-import xml.dom.minidom as minidom
-import xml.etree.ElementTree as ET
 import os
-from itertools import groupby
-import glob
-import shutil
 
 def extract_matching_labels(file_path):
     """

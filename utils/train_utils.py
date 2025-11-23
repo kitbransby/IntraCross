@@ -3,8 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from utils.eval_utils import interpolate_longitudinal, interpolate_frame_angles, angle_difference, consistent_normalize, find_min_distance_configuration, extract_keypt_rots
-from utils.preprocess import extract_matching_labels
-from utils.circumferential_stats_analysis import save_pkl, load_pkl
+from utils.preprocess import extract_matching_labels, circular_to_angle
 
 def plot_losses_longi_rot(train_loss, val_loss, val_longi_r1, val_rot_r1, folder):
 
@@ -24,7 +23,7 @@ def plot_losses_longi_rot(train_loss, val_loss, val_longi_r1, val_rot_r1, folder
     axes[1].set_xlabel('Epochs')
     axes[1].set_ylabel('Frame Dist')
     axes[1].grid()
-    axes[1].set_ylim(0, max(val_longi_r2) * 1.2)
+    axes[1].set_ylim(0, max(val_longi_r1) * 1.2)
     axes[2].plot(list(range(epochs)), val_rot_r1, label='rot vs r1')
     axes[2].set_title('OCT frame angle diff')
     axes[2].set_xlabel('Epochs')
@@ -112,13 +111,6 @@ def viz_superglue_matching(pred, data, save_folder, set_, epoch):
     axes[1].set_ylim(0, 360)
     axes[1].set_title('OCT SBs')
 
-    # Turn off axis labels and ticks for both subplots
-    # for ax in axes:
-    #     ax.set_xticks([])
-    #     ax.set_yticks([])
-    #     ax.set_xlabel('')
-    #     ax.set_ylabel('')
-
     # Get transformation objects for aligning lines across subplots
     transFigure = f.transFigure  # Figure-wide transformation
     ax0_bbox = axes[0].get_position()  # Position of the first subplot
@@ -166,28 +158,28 @@ def viz_superglue_matching(pred, data, save_folder, set_, epoch):
 
 def load_gt_val(id_):
     # --- LOAD GT ---- #
-    xingwei_keypt_ids, xingwei_keypt_rot, xingwei_ivus_oct_rough_match, xingwei_ivus_oct_keypt_match, _, _, _ = extract_matching_labels(
-        '../Data/Observer Variability/Xingwei V1 (anno)/{}.txt'.format(id_[5:]))
-    start = xingwei_ivus_oct_keypt_match[0,:].astype(np.int32)
-    end = xingwei_ivus_oct_keypt_match[-1,:].astype(np.int32)
+    r1_keypt_ids, r1_keypt_rot, r1_ivus_oct_rough_match, r1_ivus_oct_keypt_match, _, _, _ = extract_matching_labels(
+        '../Data/Observer Variability/R1/{}.txt'.format(id_[5:]))
+    start = r1_ivus_oct_keypt_match[0,:].astype(np.int32)
+    end = r1_ivus_oct_keypt_match[-1,:].astype(np.int32)
 
-    xingwei_longi_seg_interpolated = interpolate_longitudinal(xingwei_ivus_oct_keypt_match, start, end)
+    r1_longi_seg_interpolated = interpolate_longitudinal(r1_ivus_oct_keypt_match, start, end)
 
-    xingwei_oct_rot = extract_keypt_rots(xingwei_ivus_oct_keypt_match, xingwei_keypt_ids, xingwei_keypt_rot)
-    xingwei_oct_rot[:,1] += 180 # normalize from [-180, +180] to [0, 360]
-    xingwei_oct_rot = find_min_distance_configuration(xingwei_oct_rot)
-    xingwei_oct_rot[:,1] = consistent_normalize(xingwei_oct_rot[:,1], 360, 720)
+    r1_oct_rot = extract_keypt_rots(r1_ivus_oct_keypt_match, r1_keypt_ids, r1_keypt_rot)
+    r1_oct_rot[:,1] += 180 # normalize from [-180, +180] to [0, 360]
+    r1_oct_rot = find_min_distance_configuration(r1_oct_rot)
+    r1_oct_rot[:,1] = consistent_normalize(r1_oct_rot[:,1], 360, 720)
 
-    rot_start = xingwei_oct_rot[0,1]
-    rot_end = xingwei_oct_rot[-1,1]
+    rot_start = r1_oct_rot[0,1]
+    rot_end = r1_oct_rot[-1,1]
 
-    xingwei_oct_rot_interpolated = interpolate_frame_angles(xingwei_oct_rot, start[1], end[1])
-    xingwei_oct_rot_interpolated[:,1] = consistent_normalize(xingwei_oct_rot_interpolated[:,1], 360, 720)
+    r1_oct_rot_interpolated = interpolate_frame_angles(r1_oct_rot, start[1], end[1])
+    r1_oct_rot_interpolated[:,1] = consistent_normalize(r1_oct_rot_interpolated[:,1], 360, 720)
 
-    xingwei_oct_rot[:,1] = consistent_normalize(xingwei_oct_rot[:,1], 360, 720)
+    r1_oct_rot[:,1] = consistent_normalize(r1_oct_rot[:,1], 360, 720)
 
-    longi = [xingwei_longi_seg_interpolated, xingwei_ivus_oct_keypt_match]
-    rot = [xingwei_oct_rot_interpolated, xingwei_oct_rot]
+    longi = [r1_longi_seg_interpolated, r1_ivus_oct_keypt_match]
+    rot = [r1_oct_rot_interpolated, r1_oct_rot]
     
     return longi, rot
 
@@ -218,11 +210,9 @@ def validation(model, val_dataset, device, save_folder, postprocessing, save_viz
             longi_gt, rot_gt = load_gt_val(id_)
             r1_longi_interpolated, r1_longi_keypt = longi_gt
             r1_rot_interpolated, r1_rot_keypt = rot_gt
-            ivus_ed = np.load('../Data/Registration Dataset v2/val/{}/ivus_ids.npy'.format(id_))
-            oct_ed = np.load('../Data/Registration Dataset v2/val/{}/oct_ids.npy'.format(id_))
-            rot_interpolated = np.load('../Data/Registration Dataset v2/val/{}/rot_interpolated.npy'.format(id_))
-            ivus_instances = data['original0']
-            oct_instances = data['original1']
+            ivus_ed = np.load('../Data/Registration Dataset/val/{}/ivus_ids.npy'.format(id_))
+            oct_ed = np.load('../Data/Registration Dataset/val/{}/oct_ids.npy'.format(id_))
+            rot_interpolated = np.load('../Data/Registration Dataset/val/{}/rot_interpolated.npy'.format(id_))
             start = r1_longi_keypt[0,:].astype(np.int32)
             end = r1_longi_keypt[-1,:].astype(np.int32)
 
@@ -338,10 +328,6 @@ def validation(model, val_dataset, device, save_folder, postprocessing, save_viz
                 final_matching_cleaned = r1_longi_keypt[[0, -1],:]
                 final_angles_cleaned = r1_rot_keypt[[0, -1],:]
 
-            if postprocessing is not None: 
-                #print('Matching cleaned: {} Angles: {}'.format(final_matching_cleaned, final_angles_cleaned))
-                final_matching_cleaned, final_angles_cleaned = find_outliers(final_matching_cleaned, final_angles_cleaned, postprocessing, threshold=[40,150])
-
             # --- EVALUATE ---- #
 
             computer_longi_keypt = final_matching_cleaned
@@ -405,7 +391,24 @@ def validation(model, val_dataset, device, save_folder, postprocessing, save_viz
 
     loss = np.mean(total_loss)
 
-    # return loss, longi_r1_computer_diff, longi_r1_computer_interpolated_diff, rot_r1_computer_diff, rot_r1_computer_interpolated_diff
     return loss, longi_r1_computer_diff, rot_r1_computer_diff
 
+def plot_sb_detector_loss(train_loss, val_loss, val_map, folder):
+    epochs = len(val_loss)
+    f, axes = plt.subplots(1,2, figsize=(20,10))
+    axes[0].plot(list(range(epochs)), train_loss, label='train_loss')
+    axes[0].plot(list(range(epochs)), val_loss, label='val_loss')
+    axes[0].set_title('Loss')
+    axes[0].legend()
+    axes[0].set_xlabel('Epochs')
+    axes[0].set_ylabel('Loss')
+    axes[0].set_ylim(0, 0.4)
+    axes[1].plot(list(range(epochs)), val_map, label='val mAP')
+    axes[1].set_title('mAP')
+    axes[1].legend()
+    axes[1].set_xlabel('Epochs')
+    axes[1].set_ylabel('mAP')
+    axes[1].set_ylim(0, 0.8)
+    plt.savefig(folder + '/progress.png', dpi=200)
+    plt.close('all')
 

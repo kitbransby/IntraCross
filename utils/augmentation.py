@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import CubicSpline
 from utils.preprocess import circular_to_angle, angle_to_circular
+import albumentations as A
 
 
 def augmentation_pipeline(aug_list, ivus_pos, oct_pos, ivus_ctx, oct_ctx, gt_matching0, gt_matching1, gt_assignment):
@@ -102,3 +103,26 @@ def generate_random_function(V, num_control_points=10, num_samples=1000):
     y = spline(x)
     
     return x, y
+
+def get_transform_sidebranch(train):
+    if train:
+        return A.Compose([
+            A.HorizontalFlip(0.5),
+            A.VerticalFlip(0.5),
+            A.RandomRotate90(p=1),
+            A.ShiftScaleRotate(p=0.5, rotate_limit=(0,0), border_mode=0),
+            A.RandomBrightnessContrast(brightness_limit=0.10, contrast_limit=0.10),
+        ], bbox_params={'format': 'pascal_voc', 'label_fields': ['labels']})
+    else:
+        return A.Compose([
+            #ToTensorV2(p=1.0)
+        ], bbox_params={'format': 'pascal_voc', 'label_fields': ['labels']})
+    
+def get_transform_calcium():
+    return A.Compose([
+            A.Rotate(180, p=1, interpolation=2, border_mode=0, value=0),
+            A.HorizontalFlip(p=0.5),
+            A.VerticalFlip(p=0.5),
+            A.RandomBrightnessContrast(brightness_limit=0.05, contrast_limit=0.05)],
+        keypoint_params=A.KeypointParams(format='xy')
+        )

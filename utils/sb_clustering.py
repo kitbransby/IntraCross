@@ -1,12 +1,5 @@
-import glob
-import pickle
 import numpy as np
-import itertools
-from tqdm import tqdm
 from sklearn.cluster import DBSCAN
-from joblib import Parallel, delayed
-
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import (
     adjusted_rand_score, normalized_mutual_info_score, 
     fowlkes_mallows_score
@@ -149,15 +142,7 @@ class ClusteringFramework:
             cluster_points = cluster_points[self.cluster_labels == cluster_id]
     
             plt.scatter(cluster_points[:, 0], cluster_points[:, 1], label=label, s=40, alpha=0.5)
-    
-            # Compute centroid and annotate it
-            if cluster_id != -1:
-                centroid = np.mean(cluster_points, axis=0)
-                #plt.scatter(centroid[0], centroid[1], color='red', marker='x', s=30)  # Mark centroid
-                #plt.text(centroid[0], centroid[1], str(cluster_id), fontsize=12, fontweight='bold', ha='center', va='center', color='red', alpha=0.5)
 
-        
-        #plt.scatter(self.data[:, 0], self.angles, c=self.cluster_labels, cmap="Set2", s=2)
         plt.colorbar(label="Cluster ID")
         plt.title("DBSCAN Clustering Results")
         plt.savefig('clustering.png', dpi=400, transparent=True)

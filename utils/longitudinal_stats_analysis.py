@@ -2,19 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import numpy as np
-from tqdm import tqdm 
-from scipy.stats import kstest, norm, wilcoxon, iqr
-
-def ks_test_normality(data, label):
-    # Helper: Run K-S test on test set errors for normality
-    # Decides whether we use paired t-test or Wilcoxon
-    data_std = (data - np.mean(data)) / np.std(data, ddof=1)  # standardize
-    stat, p = kstest(data_std, 'norm')
-    print(f"{label}: KS statistic = {stat:.4f}, p = {p:.8f}")
-    if p > 0.05:
-        print(f"  → Likely normal")
-    else:
-        print(f"  → Not normal")
+from scipy.stats import wilcoxon, iqr
 
 def longitudinal_stats_analysis(load_folder, data=None, save_viz=None, verbose=False):
 
@@ -53,17 +41,6 @@ def longitudinal_stats_analysis(load_folder, data=None, save_viz=None, verbose=F
     r1_r1star_diff = np.abs(r1_pred - r1star_pred)
     r1_computer_diff = np.abs(r1_pred - computer_pred)
     r2_computer_diff = np.abs(r2_pred - computer_pred)
-
-    r1_r2_interpolated_diff = np.abs(r1_pred_interpolated - r2_pred_interpolated)
-    r1_r1star_interpolated_diff = np.abs(r1_pred_interpolated - r1star_pred_interpolated)
-    r1_computer_interpolated_diff = np.abs(r1_pred_interpolated - computer_pred_interpolated)
-    r2_computer_interpolated_diff = np.abs(r2_pred_interpolated - computer_pred_interpolated)
-
-    # Perform Shapiro-Wilk test
-    print('Are the errors normally distributed?')
-    ks_test_normality(r1_r2_interpolated_diff_vessel, "R1 - R2")
-    ks_test_normality(r1_computer_interpolated_diff_vessel, "R1 - Computer")
-    ks_test_normality(r2_computer_interpolated_diff_vessel, "R2 - Computer")
 
     if verbose:
         print('\n------ LONGITUDINAL STATS ANALYSIS ------')

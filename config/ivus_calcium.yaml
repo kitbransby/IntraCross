@@ -1,0 +1,19 @@
+# train
+TRAIN_BATCH_SIZE: 64
+VAL_BATCH_SIZE: 64
+RESOLUTION: 480
+LR: 0.005
+NUM_WORKERS: 12
+EPOCHS: 200
+SEED: 2
+
+# model
+MODEL: 'calcium_detector'
+ENCODER_WEIGHTS: 
+
+# data
+DATA_ROOT: '../Data/'
+MODALITY: 'ivus'
+DATASET: 'calcium'
+NUM_CLASSES: 2
+INPUT_DIM: 1

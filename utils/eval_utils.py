@@ -2,6 +2,9 @@ import numpy as np
 from scipy.interpolate import interp1d
 from utils.preprocess import extract_matching_labels
 from itertools import product
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import torch
 
 def load_gt_test(id_):
     # --- LOAD GT ---- #
@@ -280,3 +283,47 @@ def find_min_distance_configuration(data):
 
     return result
 
+
+def plot_img_bbox(img, target, pred, save_path, low_resolution):
+
+    if target is not None:
+        target_box = target['boxes']
+        if torch.is_tensor(target_box):
+            if target_box.is_cuda: target_box = target_box.cpu()
+
+    pred_box = pred['boxes']
+    if torch.is_tensor(pred_box):
+        if pred_box.is_cuda: pred_box = pred_box.cpu()
+
+    # plot the image and bboxes
+    # Bounding boxes are defined as follows: x-min y-min width height
+    if low_resolution:
+        fig, a = plt.subplots(1,1, figsize=(4,4))
+    else:
+        fig, a = plt.subplots(1, 1, figsize=(8,8))
+    a.imshow(img)
+    if target is not None:
+        for box in target_box:
+            x, y, width, height = box[0], box[1], box[2]-box[0], box[3]-box[1]
+            rect = patches.Rectangle((x, y),
+                                     width, height,
+                                     linewidth = 1,
+                                     edgecolor = 'g',
+                                     facecolor = 'none')
+            a.add_patch(rect)
+
+    for box in pred_box:
+        x, y, width, height = box[0], box[1], box[2] - box[0], box[3] - box[1]
+        rect = patches.Rectangle((x, y),
+                                 width, height,
+                                 linewidth=1,
+                                 edgecolor='r',
+                                 facecolor='none')
+        a.add_patch(rect)
+
+    plt.axis('off')
+    if low_resolution:
+        plt.savefig(save_path, dpi=50, bbox_inches='tight', pad_inches=0)
+    else:
+        plt.savefig(save_path, dpi=100, bbox_inches='tight', pad_inches=0)
+    plt.close('all')

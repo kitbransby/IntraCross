@@ -228,7 +228,7 @@ class IntraCross(nn.Module):
             kpts1[0], 
             scaler=self.conf['lambda'])
 
-            cost += temporal_penalty
+        cost += temporal_penalty
 
         scores = log_optimal_transport(
             cost, self.bin_score, iters=self.conf['num_sinkhorn_iterations']
